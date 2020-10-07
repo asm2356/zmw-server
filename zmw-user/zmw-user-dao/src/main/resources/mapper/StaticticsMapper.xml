@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.StatisticsDao">
+
+    <select id="getStatistics" resultMap="statisticsMap">
+        <if test="timeType==1">
+            select * from statistics where DATE_SUB(CURDATE(), INTERVAL 1 WEEK) &lt; date(s_date) and
+            s_type=#{statisticsType} order by s_date asc
+        </if>
+        <if test="timeType==2">
+            select sum(s_count) as s_count,s_week from statistics where s_type=#{statisticsType} group by s_week
+            order by s_week asc limit 0,4
+        </if>
+        <if test="timeType==3">
+            select sum(s_count) as s_count,s_week from statistics where s_type=#{statisticsType} group by s_week
+            order by s_week asc limit 0,12
+        </if>
+        <if test="timeType==4">
+            select * from statistics where DATE_SUB(CURDATE(), INTERVAL 1 YEAR ) &lt; date(s_date)
+            and s_type=#{statisticsType} order by s_date asc
+        </if>
+    </select>
+
+    <select id="getActivityRanking" resultMap="activeUserMap">
+        select count(*) as number,
+        user_base_info.*
+        from login_history
+        left join user_base_info on user_base_info.mw_id  = login_history.mw_id
+        group by login_history.mw_id order by number asc
+        limit 0,#{count}
+    </select>
+
+    <resultMap id="activeUserMap" type="ActiveUser">
+        <id column="mw_id" property="mwId"/>
+        <result column="number" property="count"/>
+        <association property="userBaseInfo" resultMap="userBaseInfoMap"/>
+    </resultMap>
+    <resultMap id="userBaseInfoMap" type="UserBaseInfo">
+        <id column="mw_id" property="mwId"/>
+        <result column="sex" property="sex"/>
+        <result column="birthday" property="birthday"/>
+        <result column="wechat" property="wechat"/>
+        <result column="introduction" property="introduction"/>
+        <result column="header" property="header"/>
+        <result column="alias" property="alias"/>
+        <result column="cover" property="cover"/>
+    </resultMap>
+    <resultMap id="statisticsMap" type="Statistics">
+        <id column="id" property="id"/>
+        <result column="s_count" property="count"/>
+        <result column="s_date" property="date" jdbcType="DATE"/>
+        <result column="s_week" property="week"/>
+        <result column="s_type" property="type"/>
+    </resultMap>
+</mapper>

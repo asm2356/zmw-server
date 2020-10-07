@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.CollectDao">
+
+    <select id="getCollectArticleList" parameterType="Map" resultMap="articleMap">
+        select *,(select count(discuss_id)from discuss where discuss.article_id = article_id)as comment_number
+        from   (select * from article  where article.article_id in (select collector.article_id from collector where collector.mw_id=#{mwId})) article
+        left join user_base_info on user_base_info.mw_id = article.mw_id
+        limit #{startNum},#{pageSize}
+    </select>
+
+    <insert id="addCollectArticle" parameterType="Map" >
+   insert into collector (mw_id,article_id)values(#{mwId},#{articleId})
+    </insert>
+
+    <delete id="deleteCollectArticle" parameterType="Map">
+        delete from collector where mw_id =#{mwId} and article_id = #{articleId}
+    </delete>
+
+    <delete id="deleteCollectByArticleId">
+        delete from collector where  article_id = #{articleId}
+    </delete>
+
+    <select id="getCollectArticleNumber" resultType="Integer">
+        select count(*) from collector where mw_id = #{mwId}
+    </select>
+
+    <resultMap id="articleMap" type="Article">
+        <id column="article_id" property="articleId"/>
+        <result column="title" property="title"/>
+        <result column="title_picture" property="titlePicture"/>
+        <association property="userBaseInfo" resultMap="userBaseInfoMap"/>
+    </resultMap>
+    <resultMap id="userBaseInfoMap" type="UserBaseInfo">
+        <id column="mw_id" property="mwId"/>
+        <result column="sex" property="sex"/>
+        <result column="birthday" property="birthday"/>
+        <result column="wechat" property="wechat"/>
+        <result column="introduction" property="introduction"/>
+        <result column="header" property="header"/>
+        <result column="alias" property="alias"/>
+        <result column="cover" property="cover"/>
+    </resultMap>
+</mapper>

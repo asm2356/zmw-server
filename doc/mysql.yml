@@ -1,0 +1,51 @@
+input {
+  jdbc {
+    jdbc_driver_library => "/usr/local/logstash/bin/mysql-connector-java-5.1.44.jar"
+    jdbc_driver_class => "com.mysql.jdbc.Driver"
+    jdbc_connection_string => "jdbc:mysql://192.168.52.130:3306/zmw"
+    jdbc_user => "root"
+    jdbc_password => "123456"
+    schedule => "* * * * *"
+    statement => "select * from user_base_info where mw_id > :sql_last_value"
+    type => "user_base_info"
+  }
+  jdbc {
+    jdbc_driver_library => "/usr/local/logstash/bin/mysql-connector-java-5.1.44.jar"
+    jdbc_driver_class => "com.mysql.jdbc.Driver"
+    jdbc_connection_string => "jdbc:mysql://192.168.52.130:3306/zmw"
+    jdbc_user => "root"
+    jdbc_password => "123456"
+    schedule => "* * * * *"
+    statement => "select *,(select count(discuss_id)from discuss where discuss.article_id =  article.article_id )as comment_number from article
+        left join user_base_info on user_base_info.mw_id = article.mw_id
+        where article.article_id > :sql_last_value"
+    type => "article"
+  }
+
+}
+output {
+    if[type]=="user_base_info"{
+        elasticsearch {
+            hosts => "192.168.52.130:9200"
+            index => "user_base_info"
+            document_id => "%{mw_id}"
+            document_type => "%{type}"
+            doc_as_upsert => true
+            action => "update"
+        }
+     }
+     if[type]=="article"{
+        elasticsearch {
+            hosts => "192.168.52.130:9200"
+            index => "article"
+            document_id => "%{article_id}"
+            document_type => "%{type}"
+            doc_as_upsert => true
+            action => "update"
+        }
+     }
+     stdout {
+        codec => json_lines
+    }
+	 
+}

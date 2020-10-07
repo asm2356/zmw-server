@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <aop:config proxy-target-class="true"/>
+    <!--开启shiro的注解方式-->
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor"/>
+
+    <bean id="myRealm" class="com.iflytek.front.web.shiro.MyRealm">
+        <property name="cachingEnabled" value="true"/>
+    </bean>
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="sessionManager" ref="sessionManager"/>
+        <property name="realm" ref="myRealm"/>
+        <property name="cacheManager" ref="shiroCacheManager"/>
+    </bean>
+
+    <!--配置ShiroFilter-->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+        <!--登入页面-->
+        <property name="loginUrl" value="page/user/login"/>
+        <!--登入成功页面-->
+        <!--<property name="successUrl" value="/"/>-->
+        <!--<property name="filterChainDefinitions">-->
+        <!--<value>-->
+        <!--&lt;!&ndash;/resources/**=anon&ndash;&gt;-->
+        <!--</value>-->
+        <!--</property>-->
+
+    </bean>
+    <bean id="shiroSessionService" class="com.iflytek.config.service.shiro.ShiroSessionService"/>
+    <bean id="simpleCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <property name="name" value="zmw_session"/>
+        <property name="httpOnly" value="true"/>
+    </bean>
+    <bean id="sessionManager"
+          class="com.iflytek.config.service.shiro.MyWebSessionManager">
+        <property name="deleteInvalidSessions" value="true"/>
+        <property name="sessionDAO" ref="shiroSessionService"/>
+        <property name="sessionValidationSchedulerEnabled" value="true"/>
+        <property name="sessionIdCookie" ref="simpleCookie"/>
+        <property name="sessionIdUrlRewritingEnabled" value="true"/>
+        <property name="sessionListeners">
+            <list>
+                <bean class="com.iflytek.front.web.shiro.MySessionListener"/>
+            </list>
+        </property>
+    </bean>
+    <bean id="shiroCacheManager" class="com.iflytek.config.service.shiro.ShiroCacheManager"/>
+</beans>

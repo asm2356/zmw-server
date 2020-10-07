@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.LoginHistoryDao">
+    <!--id,mwId,phone,remoteIP,describe,startTime,endTime-->
+    <select id="getLoginHistory" resultMap="loginHistoryMap">
+        select * from login_history
+        <where>
+            <if test="loginHistory!=null">
+                <if test="loginHistory.id!=null">
+                    id=#{loginHistory.id}
+                </if>
+                <if test="loginHistory.mwId!=null">
+                    and mw_id like concat('%',#{loginHistory.mwId},'%')
+                </if>
+                <if test="loginHistory.phone!=null">
+                    and phone like concat('%',#{loginHistory.phone} ,'%')
+                </if>
+                <if test="loginHistory.loginEquipment!=null">
+                    and login_equipment like concat('%',#{loginHistory.loginEquipment},'%')
+                </if>
+
+                <if test="loginHistory.browser!=null">
+                    and browser like concat('%', #{loginHistory.browser},'%')
+                </if>
+
+                <if test="loginHistory.ip!=null">
+                    and ip like concat('%',#{loginHistory.ip},'%')
+                </if>
+
+                <if test="loginHistory.loginAddress!=null">
+                    and login_address like concat('%', #{loginHistory.loginAddress} ,'%')
+                </if>
+            </if>
+            <if test="startTime!=-1 and endTime !=-1">
+                and login_time &gt;= #{startTime} and login_time &lt;= #{endTime}
+            </if>
+        </where>
+        limit #{startNum},#{pageSize}
+    </select>
+
+    <select id="getLoginHistoryNumber" resultType="Integer">
+        select count(*) from login_history
+        <where>
+            <if test="loginHistory!=null">
+                <if test="loginHistory.id!=null">
+                    id=#{loginHistory.id}
+                </if>
+                <if test="loginHistory.mwId!=null">
+                    and mw_id =#{loginHistory.mwId}
+                </if>
+                <if test="loginHistory.phone!=null">
+                    and phone =#{loginHistory.phone}
+                </if>
+                <if test="loginHistory.loginEquipment!=null">
+                    and login_equipment =#{loginHistory.loginEquipment}
+                </if>
+
+                <if test="loginHistory.browser!=null">
+                    and browser= #{loginHistory.browser}
+                </if>
+
+                <if test="loginHistory.ip!=null">
+                    and ip=#{loginHistory.ip}
+                </if>
+
+                <if test="loginHistory.loginAddress!=null">
+                    and login_address = #{loginHistory.loginAddress}
+                </if>
+
+            </if>
+            <if test="startTime!=-1 and endTime !=-1">
+                and login_time &gt;= #{startTime} and login_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+    <resultMap id="loginHistoryMap" type="LoginHistory">
+        <id column="id" property="id"/>
+        <result column="mw_id" property="mwId"/>
+        <result column="login_equipment" property="loginEquipment"/>
+        <result column="browser" property="browser"/>
+        <result column="login_time" property="loginTime"/>
+        <result column="ip" property="ip"/>
+        <result column="phone" property="phone"/>
+    </resultMap>
+</mapper>

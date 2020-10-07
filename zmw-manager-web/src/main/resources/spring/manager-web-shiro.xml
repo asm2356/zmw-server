@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <aop:config proxy-target-class="true"/>
+    <!--开启shiro的注解方式-->
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+    <bean class="com.iflytek.manager.web.shiro.MyRealm" id="myRealm"/>
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="myRealm"/>
+        <property name="sessionManager" ref="sessionManager"/>
+        <!--<property name="cacheManager" ref="shiroCacheManager"/>-->
+    </bean>
+
+    <!--配置ShiroFilter-->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+    <!--保证实现了Shiro内部lifecycle函数的bean执行-->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor">
+        <property name="proxyTargetClass" value="true"/>
+    </bean>
+    <bean id="shiroSessionService" class="com.iflytek.config.service.shiro.ShiroSessionService"/>
+    <bean id="simpleCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <property name="name" value="zmw_session"/>
+        <property name="path" value=""/>
+        <property name="maxAge" value="1800"/>
+        <property name="httpOnly" value="false"/>
+    </bean>
+    <bean id="sessionManager"
+          class="com.iflytek.config.service.shiro.MyWebSessionManager">
+        <!--<property name="globalSessionTimeout" value="1800000"/>-->
+        <property name="deleteInvalidSessions" value="true"/>
+        <property name="sessionDAO" ref="shiroSessionService"/>
+        <property name="sessionValidationSchedulerEnabled" value="true"/>
+        <property name="sessionIdCookie" ref="simpleCookie"/>
+    </bean>
+    <bean id="shiroCacheManager" class="com.iflytek.config.service.shiro.ShiroCacheManager"/>
+</beans>

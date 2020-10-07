@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.ArticleDao">
+    <sql id="article_column">
+        article_id,article.mw_id,title,title_picture,status,openness,reading_number,category_name,content,music,pwd,praise_number,release_time
+    </sql>
+    <sql id="article_field">
+        #{articleId},#{userBaseInfo.mwId},#{title},#{titlePicture},#{status},#{openness},#{readingNumber},#{categoryName},
+        #{content},#{music},#{pwd},#{praiseNumber},#{releaseTime}
+    </sql>
+    <sql id="user_base_info_column">
+        user_base_info.mw_id,sex,birthday,wechat,introduction,header,alias,cover
+    </sql>
+    <select id="getArticleList" parameterType="Map" resultMap="articleMap">
+        select<include refid="article_column"/>,
+        <include refid="user_base_info_column"/>,
+        (select count(discuss_id)from discuss where discuss.article_id = article.article_id)as comment_number
+        from
+        article
+        left join user_base_info on user_base_info.mw_id = article.mw_id
+        <where>
+            <if test="openness!=null">
+                and openness = #{openness}
+            </if>
+            <if test="categoryName!=null">
+                and category_name = #{categoryName}
+            </if>
+            <if test="mwId!=null">
+                and article.mw_id = #{mwId}
+            </if>
+            <if test="timeOrder!=null">
+                <if test="timeOrder==desc">
+                    order by release_time desc
+                </if>
+                <if test="timeOrder==asc">
+                    order by release_time asc
+                </if>
+            </if>
+            <if test="status!=1">
+                and article.status=#{status}
+            </if>
+
+            <if test="startTime!=null and endTime!=null">
+                and release_time &gt;=#{startTime} and release_time &lt;=#{endTime}
+            </if>
+
+            <if test="title!=null">
+                and title like concat ('%',#{title},'%')
+            </if>
+        </where>
+        <if test="hot==true">
+            order by comment_number desc,praise_number desc,reading_number desc
+        </if>
+        limit #{startNum},#{pageSize}
+    </select>
+
+
+    <select id="getArticleNumber" parameterType="Map" resultType="Integer">
+        select count(*)
+        from
+        article
+        <where>
+            <if test="openness!=null">
+                openness = #{openness}
+            </if>
+            <if test="categoryName!=null">
+                and article.category_name = #{categoryName}
+            </if>
+            <if test="mwId!=null">
+                and article.mw_id = #{mwId}
+            </if>
+            <if test="status!=1">
+                and article.status=#{status}
+            </if>
+            <if test="startTime!=null and endTime!=null">
+                and release_time &gt;=#{startTime} and release_time &lt;=#{endTime}
+            </if>
+            <if test="title!=null">
+                and title like concat ('%',#{title},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="getArticle" resultMap="articleMap">
+        select<include refid="article_column"/>,
+        <include refid="user_base_info_column"/>,
+        (select count(discuss_id)from discuss where discuss.article_id = article.article_id)as comment_number
+        from
+        article
+        left join user_base_info on user_base_info.mw_id = article.mw_id
+        where article_id =#{articleId}
+    </select>
+    <insert id="insertArticle" parameterType="Article">
+        insert into article(<include refid="article_column"/>)
+        values(<include refid="article_field"/>);
+    </insert>
+
+
+    <update id="updatePraise">
+        update article set praise_number=praise_number+#{increment}
+        where article_id= #{articleId}
+    </update>
+
+    <update id="updateReadingNumber">
+        update article set reading_number=reading_number+#{increment}
+        where article_id=#{articleId}
+    </update>
+
+    <select id="getReadingNumber" resultType="Integer">
+        select ifnull(sum(reading_number) ,0)from article
+        left join user_base_info on user_base_info.mw_id  = article.mw_id
+        where article.mw_id = #{mwId}
+    </select>
+
+    <update id="updateOpenness" parameterType="Map">
+        update article set openness = #{openness}, pwd=#{pwd}
+        where article_id = #{articleId}
+    </update>
+    <resultMap id="articleMap" type="Article">
+        <id column="article_id" property="articleId"/>
+        <result column="title" property="title"/>
+        <result column="title_picture" property="titlePicture"/>
+        <result column="openness" property="openness"/>
+        <result column="release_time" property="releaseTime"/>
+        <result column="category_name" property="categoryName"/>
+        <result column="pwd" property="pwd"/>
+        <result column="praise_number" property="praiseNumber"/>
+        <result column="reading_number" property="readingNumber"/>
+        <result column="comment_number" property="commentNumber"/>
+        <result column="content" property="content"/>
+        <result column="music" property="music"/>
+        <result column="status" property="status"/>
+        <association property="userBaseInfo" resultMap="userBaseInfoMap"/>
+    </resultMap>
+    <resultMap id="userBaseInfoMap" type="UserBaseInfo">
+        <id column="mw_id" property="mwId"/>
+        <result column="sex" property="sex"/>
+        <result column="birthday" property="birthday"/>
+        <result column="wechat" property="wechat"/>
+        <result column="introduction" property="introduction"/>
+        <result column="header" property="header"/>
+        <result column="alias" property="alias"/>
+        <result column="cover" property="cover"/>
+    </resultMap>
+</mapper>

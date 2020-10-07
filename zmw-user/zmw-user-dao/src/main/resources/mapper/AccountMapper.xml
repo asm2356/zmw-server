@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.AccountDao">
+    <select id="getUserCount" resultType="java.lang.Integer">
+        select count(*) from account;
+    </select>
+    <select id="findAccountByMwId" resultMap="accountMap">
+        select account.*,role.id role_id,role.role_name,permission.permission_name,permission.`describe`,permission.id permission_id
+        from account
+        left join user_role on user_role.mw_id = account.mw_id
+        left join role on role.id = user_role.role_id
+        left join user_permission on user_permission.mw_id = account.mw_id
+        left join permission on permission.id  =  user_permission.permission_id
+        where account.mw_id = #{mwId}
+    </select>
+
+    <select id="findAccountByPhone" resultMap="accountMap">
+        select account.*,role.id role_id,role.role_name,permission.permission_name,permission.`describe`,permission.id permission_id
+        from account
+        left join user_role on user_role.mw_id = account.mw_id
+        left join role on role.id = user_role.role_id
+        left join user_permission on user_permission.mw_id = account.mw_id
+        left join permission on permission.id  =  user_permission.permission_id
+        where account.phone = #{phone}
+    </select>
+
+    <select id="getManagerUserList" resultMap="managerUserMap">
+        select account.mw_id,account.phone,account.status,
+        role.id role_id,role.role_name,
+        permission.id permission_id,permission.permission_name,permission.`describe`,
+        user_base_info.sex,user_base_info.birthday,user_base_info.wechat,user_base_info.introduction,user_base_info.header,user_base_info.alias,user_base_info.cover,
+        (select count(*) from login_history where login_history.mw_id = account.mw_id) as login_number
+        from (select * from account limit #{startNum},#{pageSize}) as account
+        left join user_role on user_role.mw_id = account.mw_id
+        left join role on role.id = user_role.role_id
+        left join user_permission on user_permission.mw_id = account.mw_id
+        left join permission on permission.id = user_permission.permission_id
+        left join user_base_info on user_base_info.mw_id = account.mw_id
+        <where>
+            <if test="roleName!=null">
+                and role_name = #{roleName}
+            </if>
+            <if test="permissionName!=null">
+                and permission_name = #{permissionName}
+            </if>
+            <if test="mwId!=null">
+                and account.mw_id =#{mwId}
+            </if>
+            <if test="alias!=null">
+                and user_base_info.alias like concat('%',#{alias},'%')
+            </if>
+        </where>
+
+    </select>
+
+    <select id="getManagerUserNumber" resultType="Integer">
+        select count(*) from
+        (select count(*)
+        from account
+        left join user_role on user_role.mw_id = account.mw_id
+        left join role on role.id = user_role.role_id
+        left join user_permission on user_permission.mw_id = account.mw_id
+        left join permission on permission.id = user_permission.permission_id
+        left join user_base_info on user_base_info.mw_id = account.mw_id
+        <where>
+            <if test="roleName!=null">
+                and role_name = #{roleName}
+            </if>
+            <if test="permissionName!=null">
+                and permission_name = #{permissionName}
+            </if>
+            <if test="mwId!=null">
+                and account.mw_id =#{mwId}
+            </if>
+            <if test="alias!=null">
+                user_base_info.alias like CONCAT('%',#{alias},'%')
+            </if>
+        </where>
+        group by account.mw_id) as t
+    </select>
+
+    <resultMap id="managerUserMap" type="ManagerUser">
+        <id column="mw_id" property="mwId"/>
+        <result column="login_number" property="loginNumber"/>
+        <association property="account" resultMap="accountMap" javaType="Account"/>
+        <association property="userBaseInfo" resultMap="userBaseInfoMap" javaType="UserBaseInfo"/>
+    </resultMap>
+
+    <resultMap id="userBaseInfoMap" type="UserBaseInfo">
+        <id column="mw_id" property="mwId"/>
+        <result column="sex" property="sex"/>
+        <result column="birthday" property="birthday"/>
+        <result column="wechat" property="wechat"/>
+        <result column="introduction" property="introduction"/>
+        <result column="header" property="header"/>
+        <result column="alias" property="alias"/>
+        <result column="cover" property="cover"/>
+    </resultMap>
+    <resultMap id="accountMap" type="Account">
+        <id property="mwId" column="mw_id"/>
+        <result property="pwd" column="pwd"/>
+        <result property="status" column="status"/>
+        <result property="phone" column="phone"/>
+        <collection property="roleList" resultMap="roleMap" ofType="Role" javaType="List"/>
+        <collection property="permissionList" resultMap="permissionMap" ofType="Permission" javaType="List"/>
+    </resultMap>
+    <resultMap id="roleMap" type="Role">
+        <id column="role_id" property="id"/>
+        <result column="role_name" property="roleName"/>
+    </resultMap>
+    <resultMap id="permissionMap" type="Permission">
+        <id column="permission_id" property="id"/>
+        <result column="permission_name" property="permissionName"/>
+        <result column="describe" property="describe"/>
+    </resultMap>
+
+    <select id="findUserPhoneCount" resultType="Integer">
+        select count(*) from account where phone = #{phone};
+    </select>
+    <insert id="addRole" parameterType="Map">
+        insert into user_role(mw_id,role_id)
+        values
+        <foreach collection="roleIdList" item="item" separator=",">
+            (#{mwId},#{item})
+        </foreach>
+    </insert>
+    <select id="getUserRoleList" resultMap="roleMap">
+      select role.id as role_id,role_name from role
+      left join  user_role on user_role.role_id = role.id
+      where user_role.mw_id =#{mwId}
+    </select>
+
+    <select id="isExistRole" parameterType="Map" resultType="Integer">
+        select count(user_role.mw_id) from user_role where mw_id = #{mwId} and role_id = #{roleId};
+    </select>
+    <delete id="removeRole" parameterType="Map">
+        delete from user_role where mw_id = #{mwId} and role_id in
+        <foreach collection="roleIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <delete id="removeAllRole">
+        delete from user_role where mw_id = #{mwId}
+    </delete>
+    <insert id="addPermission" parameterType="Map">
+        insert into user_permission(mw_id,permission_id) values
+        <foreach collection="permissionIdList" item="item" separator=",">
+            (#{mwId},#{item})
+        </foreach>
+    </insert>
+    <select id="getAllRoleList" resultMap="roleMap">
+        select role.id as role_id,role.role_name from role;
+    </select>
+    <select id="isExistPermission" parameterType="Map" resultType="Integer">
+        select count(*) from user_permission where mw_id = #{mwId} and permission_id= #{permissionId}
+    </select>
+    <delete id="removePermission" parameterType="Map">
+        delete from user_permission where mw_id = #{mwId} and permission_id in
+        <foreach collection="permissionIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <delete id="removeAllPermission">
+      delete from user_permission where mw_id = #{mwId}
+    </delete>
+    <select id="getPermissionList" resultMap="permissionMap">
+        select permission.id as permission_id,permission.permission_name,permission.`describe` from permission;
+    </select>
+</mapper>

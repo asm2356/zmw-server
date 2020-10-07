@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.UserContactDao">
+    <select id="getFansNumber" resultType="Integer">
+        select count(*) from user_contact where noticer_mw_id = #{mwId}
+    </select>
+
+    <select id="getNoticerNumber" resultType="Integer">
+        select count(*) from user_contact where mw_id = #{mwId}
+
+    </select>
+
+    <select id="getNoticerList" resultMap="userBaseInfoMap">
+        select * from user_base_info
+        left join user_contact on user_base_info.mw_id = user_contact.noticer_mw_id
+        where user_contact.mw_id = #{mwId}
+        limit #{startNum},#{pageSize}
+    </select>
+
+    <select id="getFansList" resultMap="userBaseInfoMap">
+        select * from user_base_info
+        left join user_contact on user_base_info.mw_id = user_contact.mw_id
+        where user_contact.noticer_mw_id = #{mwId}
+        limit #{startNum},#{pageSize}
+    </select>
+
+    <insert id="addContact">
+        insert into user_contact(mw_id,noticer_mw_id)values(#{mwId},#{noticerMwId});
+    </insert>
+
+    <delete id="deleteContact">
+        delete from user_contact where mw_id = #{mwId} and noticer_mw_id =#{noticerMwId}
+    </delete>
+    <resultMap id="userBaseInfoMap" type="UserBaseInfo">
+        <id column="mw_id" property="mwId"/>
+        <result column="sex" property="sex"/>
+        <result column="birthday" property="birthday"/>
+        <result column="wechat" property="wechat"/>
+        <result column="introduction" property="introduction"/>
+        <result column="header" property="header"/>
+        <result column="alias" property="alias"/>
+        <result column="cover" property="cover"/>
+    </resultMap>
+</mapper>

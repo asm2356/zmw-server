@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+    <!--<dubbo:application name="manager-service"/>-->
+    <!--<dubbo:registry address="zookeeper://127.0.0.1:2181"/>-->
+    <!--&lt;!&ndash; 用dubbo协议在20880端口暴露服务 &ndash;&gt;-->
+    <!--<dubbo:protocol name="dubbo" port="20880"/>-->
+    <bean id="loginHistoryService" class="com.iflytek.manager.service.imp.LoginHistoryServiceImp"/>
+    <bean id="accountService" class="com.iflytek.manager.service.imp.AccountServiceImp"/>
+    <bean id="articleService" class="com.iflytek.manager.service.imp.ArticleServiceImp"/>
+    <bean id="discussService" class="com.iflytek.manager.service.imp.DiscussServiceImp"/>
+    <bean id="userContactService" class="com.iflytek.manager.service.imp.UserContactServiceImp"/>
+    <bean id="userService" class="com.iflytek.manager.service.imp.UserServiceImp"/>
+    <bean id="userBaseInfoService" class="com.iflytek.manager.service.imp.UserBaseInfoServiceImp"/>
+    <bean id="collectService" class="com.iflytek.manager.service.imp.CollectServiceImp"/>
+    <bean id="letterService" class="com.iflytek.manager.service.imp.LetterServiceImp"/>
+    <bean id="statisticsService" class="com.iflytek.manager.service.imp.StatisticsServiceImp"/>
+    <bean id="dfsFileService" class="com.iflytek.manager.service.imp.DFSFileServiceImp"/>
+    <dubbo:service interface="com.iflytek.manager.api.LoginHistoryService" ref="loginHistoryService"/>
+    <dubbo:service interface="com.iflytek.manager.api.AccountService" ref="accountService"/>
+    <dubbo:service interface="com.iflytek.manager.api.ArticleService" ref="articleService"/>
+    <dubbo:service interface="com.iflytek.manager.api.DiscussService" ref="discussService"/>
+    <dubbo:service interface="com.iflytek.manager.api.UserContactService" ref="userContactService"/>
+    <dubbo:service interface="com.iflytek.manager.api.UserBaseInfoService" ref="userBaseInfoService"/>
+    <dubbo:service interface="com.iflytek.manager.api.UserService" ref="userService"/>
+    <dubbo:service interface="com.iflytek.manager.api.CollectService" ref="collectService"/>
+    <dubbo:service interface="com.iflytek.manager.api.LetterService" ref="letterService"/>
+    <dubbo:service interface="com.iflytek.manager.api.StatisticsService" ref="statisticsService"/>
+    <dubbo:service interface="com.iflytek.manager.api.DFSFileService" ref="dfsFileService"/>
+</beans>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.LetterDao">
+    <insert id="insertLetter" parameterType="Letter">
+        insert into letter(id,mw_id,to_mw_id,send_time,content,is_read)
+        values(#{id},#{userBaseInfo.mwId},#{toUserBaseInfo.mwId},#{sendTime},#{content},#{isRead})
+    </insert>
+
+    <select id="getLetterList" parameterType="Map" resultMap="letterMap">
+        select letter.*,
+        a.alias a_alias,a.birthday a_birthday,a.cover a_cover,a.header a_header,a.introduction a_introduction,a.mw_id
+        a_mw_id,a.sex a_sex,a.wechat a_wechat,
+        b.alias b_alias,b.birthday b_birthday,b.cover b_cover,b.header b_header,b.introduction b_introduction,b.mw_id
+        b_mw_id,b.sex b_sex,b.wechat b_wechat
+        from letter
+        left join user_base_info a on a.mw_id = letter.mw_id
+        left join user_base_info b on b.mw_id = letter.to_mw_id
+        where
+        <if test="bothLetter==true">
+            letter.to_mw_id = #{mwId} or letter.mw_id = #{mwId}
+        </if>
+        <if test="bothLetter==false">
+            letter.to_mw_id = #{mwId}
+        </if>
+
+        <if test="isRead!=null">
+            and letter.is_read = #{isRead}
+        </if>
+        order by send_time desc
+        limit #{startNum},#{pageSize}
+    </select>
+    <delete id="deleteLetter">
+        delete from letter where id = #{id}
+    </delete>
+
+    <select id="getLetterNumber" resultType="Integer">
+        select count(*) from letter
+        <where>
+            <if test="bothLetter==true">
+                mw_id = #{mwId}
+                or to_mw_id =#{mwId}
+            </if>
+            <if test="bothLetter==false">
+                mw_id = #{mwId}
+            </if>
+        </where>
+    </select>
+
+    <update id="readLetter">
+        update letter set letter.is_read = #{letterStatus} where letter.id = #{id}
+    </update>
+    <resultMap id="letterMap" type="Letter">
+        <id column="id" property="id"/>
+        <result column="send_time" property="sendTime"/>
+        <result column="content" property="content"/>
+        <result column="is_read" property="isRead"/>
+        <association property="userBaseInfo" resultMap="userBaseInfoMap"/>
+        <association property="toUserBaseInfo" resultMap="toUserBaseInfoMap"/>
+    </resultMap>
+    <resultMap id="userBaseInfoMap" type="UserBaseInfo">
+        <id column="a_mw_id" property="mwId"/>
+        <result column="a_sex" property="sex"/>
+        <result column="a_birthday" property="birthday"/>
+        <result column="a_wechat" property="wechat"/>
+        <result column="a_introduction" property="introduction"/>
+        <result column="a_header" property="header"/>
+        <result column="a_alias" property="alias"/>
+        <result column="a_cover" property="cover"/>
+    </resultMap>
+    <resultMap id="toUserBaseInfoMap" type="UserBaseInfo">
+        <id column="b_mw_id" property="mwId"/>
+        <result column="b_sex" property="sex"/>
+        <result column="b_birthday" property="birthday"/>
+        <result column="b_wechat" property="wechat"/>
+        <result column="b_introduction" property="introduction"/>
+        <result column="b_header" property="header"/>
+        <result column="b_alias" property="alias"/>
+        <result column="b_cover" property="cover"/>
+    </resultMap>
+</mapper>

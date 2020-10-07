@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iflytek.manager.dao.DiscussDao">
+    <select id="getDiscussArticleCount" resultType="Integer">
+        select count(*) from discuss where article_id =#{articleId}
+    </select>
+    <select id="getDiscussList" resultMap="discussMap">
+        select d.*,
+        r_discuss_id,r_mw_id , r_content, r_discuss.r_discuss_id
+        discuss_id_alias,to_mw_id,r_praise_number,r_discuss_time,to_content,
+        a.mw_id a_mw_id,a.sex a_sex,a.birthday a_birthday,a.wechat a_wechat,a.introduction a_introduction,a.header
+        a_header,a.alias a_alias,a.cover a_cover,
+        b.mw_id b_mw_id,b.sex b_sex,b.birthday b_birthday,b.wechat b_wechat,b.introduction b_introduction,b.header
+        b_header,b.alias b_alias,b.cover b_cover,
+        c.mw_id c_mw_id,c.sex c_sex,c.birthday c_birthday,c.wechat c_wechat,c.introduction c_introduction,c.header
+        c_header,c.alias c_alias,c.cover c_cover
+        from (select * from discuss
+                where  discuss.article_id =#{articleId}
+        limit #{startNum},#{pageSize}) as d
+        left join r_discuss on r_discuss.discuss_id =d.discuss_id
+        left join user_base_info as a on a.mw_id = d.mw_id
+        left join user_base_info as b on b.mw_id = r_discuss.r_mw_id
+        left join user_base_info as c on c.mw_id = r_discuss.to_mw_id
+        order by d.discuss_time desc
+    </select>
+
+    <select id="getOnlyDiscussList" parameterType="Map" resultMap="onlyDiscussMap">
+        select * from discuss
+        left join user_base_info on discuss.mw_id = user_base_info.mw_id
+        <where>
+            <if test="discussId!=null">
+                and discuss.discuss_id =#{discussId}
+            </if>
+            <if test="articleId!=null">
+                and discuss.article_id =#{articleId}
+            </if>
+
+            <if test="content!=null">
+                and discuss.content like concat('%',#{content},'%')
+            </if>
+
+            <if test="mwId!=null">
+                and discuss.mw_id = #{mwId}
+            </if>
+        </where>
+        limit #{startNum},#{pageSize}
+    </select>
+
+    <select id="getOnlyDiscussCount" resultType="Integer">
+        select count(*) from discuss
+        left join user_base_info on discuss.mw_id = user_base_info.mw_id
+        <where>
+            <if test="discussId!=null">
+                and discuss.discuss_id =#{discussId}
+            </if>
+            <if test="articleId!=null">
+                and discuss.article_id =#{articleId}
+            </if>
+
+            <if test="content!=null">
+                and discuss.content like concat('%',#{content},'%')
+            </if>
+
+            <if test="mwId!=null">
+                and discuss.mw_id = #{mwId}
+            </if>
+        </where>
+    </select>
+    <resultMap id="onlyDiscussMap" type="Discuss">
+        <id column="discuss_id" property="discussId"/>
+        <result column="discuss_time" property="discussTime"/>
+        <result column="article_id" property="articleId"/>
+        <result column="content" property="content"/>
+        <result column="praise_number" property="praiseNumber"/>
+        <association property="userBaseInfo" resultMap="userBaseInfoMap"/>
+    </resultMap>
+    <resultMap id="userBaseInfoMap" type="UserBaseInfo">
+        <id column="mw_id" property="mwId"/>
+        <result column="sex" property="sex"/>
+        <result column="birthday" property="birthday"/>
+        <result column="wechat" property="wechat"/>
+        <result column="introduction" property="introduction"/>
+        <result column="header" property="header"/>
+        <result column="alias" property="alias"/>
+        <result column="cover" property="cover"/>
+    </resultMap>
+
+    <insert id="insertDiscuss" parameterType="Discuss" useGeneratedKeys="true" keyProperty="discussId"
+            keyColumn="discuss_id">
+      insert into discuss (discuss_id,discuss_time	,mw_id,content,article_id,praise_number)
+      values(#{discussId},#{discussTime},#{userBaseInfo.mwId},#{content},#{articleId},#{praiseNumber})
+    </insert>
+
+    <insert id="insertReplyDiscuss" parameterType="ReplyDiscuss">
+        insert into r_discuss(r_discuss_id,r_discuss_time,discuss_id,r_content,r_mw_id,to_mw_id,r_praise_number,to_content)
+        values(#{replyDiscussId},#{discussTime},#{discussId},#{content},#{userBaseInfo.mwId},#{targetUserBaseInfo.mwId},#{replyPraiseNumber},#{toContent});
+    </insert>
+
+    <delete id="deleteDiscuss" parameterType="String">
+        delete from discuss where discuss.discuss_id =#{discussId}
+    </delete>
+
+    <delete id="deleteReplyDiscuss" parameterType="String">
+        delete from r_discuss where r_discuss.r_discuss_id =#{replyDiscussId}
+    </delete>
+    <update id="updateDiscussPraise" parameterType="Map">
+  update discuss set praise_number =praise_number+#{praiseNumber} where  discuss_id = #{discussId}
+    </update>
+    <update id="updateReplyDiscussPraise" parameterType="Map">
+update r_discuss set r_praise_number =r_praise_number+ #{praiseNumber} where r_discuss_id=#{replyDiscussId}
+    </update>
+
+
+    <select id="getUserArticleDiscussList" parameterType="Map" resultMap="userArticleDiscussMap">
+         SELECT
+	d.*,
+	r_discuss_id,
+	r_mw_id,
+	r_content,
+	r_discuss.r_discuss_id discuss_id_alias,
+	to_mw_id,
+	r_praise_number,
+	r_discuss_time,
+	to_content,
+	a.mw_id a_mw_id,
+	a.sex a_sex,
+	a.birthday a_birthday,
+	a.wechat a_wechat,
+	a.introduction a_introduction,
+	a.header a_header,
+	a.alias a_alias,
+	a.cover a_cover,
+	b.mw_id b_mw_id,
+	b.sex b_sex,
+	b.birthday b_birthday,
+	b.wechat b_wechat,
+	b.introduction b_introduction,
+	b.header b_header,
+	b.alias b_alias,
+	b.cover b_cover,
+	c.mw_id c_mw_id,
+	c.sex c_sex,
+	c.birthday c_birthday,
+	c.wechat c_wechat,
+	c.introduction c_introduction,
+	c.header c_header,
+	c.alias c_alias,
+	c.cover c_cover,
+	article.*,
+	article.openness,
+	article.reading_number,
+	article.praise_number AS article_praise_number,
+	e.mw_id e_mw_id,
+	e.sex e_sex,
+	e.birthday e_birthday,
+	e.wechat e_wechat,
+	e.introduction e_introduction,
+	e.header e_header,
+	e.alias e_alias,
+	e.cover e_cover
+FROM
+	discuss AS d
+	LEFT JOIN r_discuss ON r_discuss.discuss_id = d.discuss_id
+	LEFT JOIN user_base_info AS a ON a.mw_id = d.mw_id
+	LEFT JOIN user_base_info AS b ON b.mw_id = r_discuss.r_mw_id
+	LEFT JOIN user_base_info AS c ON c.mw_id = r_discuss.to_mw_id
+	LEFT JOIN article ON article.article_id = d.article_id
+	LEFT JOIN user_base_info AS e ON e.mw_id = article.mw_id
+WHERE
+	d.mw_id = #{mwId}
+	OR r_discuss.r_mw_id =  #{mwId}
+ORDER BY
+	r_discuss_time ASC,
+	d.discuss_time ASC
+        limit #{startNum},#{pageSize}
+    </select>
+    <delete id="deleteReplyDiscussArticleById">
+        delete from r_discuss where r_discuss.discuss_id in (select discuss.discuss_id from discuss where discuss.article_id = #{articleId})
+    </delete>
+    <delete id="deleteDiscussByArticleId">
+        delete from discuss where discuss.article_id = #{articleId}
+    </delete>
+
+    <select id="getReplyDiscussList" parameterType="Map" resultMap="replyDiscussMap">
+        select r_discuss.*,b.mw_id b_mw_id,b.sex b_sex,b.birthday b_birthday,b.wechat b_wechat,b.introduction
+        b_introduction,b.header b_header,b.alias b_alias,b.cover b_cover,
+        c.mw_id c_mw_id,c.sex c_sex,c.birthday c_birthday,c.wechat c_wechat,c.introduction c_introduction,c.header
+        c_header,c.alias c_alias,c.cover c_cover
+        from r_discuss
+        left join user_base_info as b on b.mw_id = r_discuss.r_mw_id
+        left join user_base_info as c on c.mw_id = r_discuss.to_mw_id
+        <where>
+            <if test="replyDiscussId!=null">
+                and r_discuss.r_discuss_id = #{replyDiscussId}
+            </if>
+            <if test="discussId!=null">
+                and r_discuss.discuss_id = #{discussId}
+            </if>
+
+            <if test="mwId!=null">
+                and r_discuss.r_mw_id = #{mwId}
+            </if>
+            <if test="toContent!=null">
+                and r_discuss.to_content like concat('%',#{toContent},'%')
+            </if>
+            <if test="replyContent!=null">
+                and r_discuss.r_content like concat('%',#{replyContent},'%')
+            </if>
+        </where>
+        limit #{startNum},#{pageSize}
+    </select>
+
+    <select id="getReplyDiscussCount" parameterType="Map" resultType="Integer">
+        select count(*) from r_discuss
+        left join user_base_info as a on a.mw_id = r_discuss.r_mw_id
+        left join user_base_info as b on b.mw_id = r_discuss.to_mw_id
+        <where>
+            <if test="mwId!=null">
+                and a.mw_id = #{mwId}
+            </if>
+            <if test="replyDiscussId!=null">
+                and r_discuss.reply_discuss_id = #{replyDiscussId}
+            </if>
+            <if test="discussId!=null">
+                and r_discuss.discuss_id = #{discussId}
+            </if>
+            <if test="toContent!=null">
+                and r_discuss.to_content like concat('%',#{toContent},'%')
+            </if>
+            <if test="replyContent!=null">
+                and r_discuss.r_content like concat('%',#{replyContent},'%')
+            </if>
+        </where>
+    </select>
+    <resultMap id="userArticleDiscussMap" type="UserArticleDiscuss">
+        <association property="discuss" resultMap="userDiscussMap"/>
+        <association property="replyDiscuss" resultMap="replyDiscussMap"/>
+        <association property="article" resultMap="articleMap"/>
+    </resultMap>
+
+    <resultMap id="userDiscussMap" type="Discuss">
+        <id column="discuss_id" property="discussId"/>
+        <result column="discuss_time" property="discussTime"/>
+        <result column="article_id" property="articleId"/>
+        <result column="content" property="content"/>
+        <result column="praise_number" property="praiseNumber"/>
+        <association property="userBaseInfo" resultMap="discussUserBaseInfoMap"/>
+    </resultMap>
+    <resultMap id="articleMap" type="Article">
+        <id column="article_id" property="articleId"/>
+        <result column="title" property="title"/>
+        <result column="title_picture" property="titlePicture"/>
+        <association property="userBaseInfo" resultMap="articleUserBaseInfoMap"/>
+    </resultMap>
+    <resultMap id="articleUserBaseInfoMap" type="UserBaseInfo">
+        <id column="e_mw_id" property="mwId"/>
+        <result column="e_sex" property="sex"/>
+        <result column="e_birthday" property="birthday"/>
+        <result column="e_wechat" property="wechat"/>
+        <result column="e_introduction" property="introduction"/>
+        <result column="e_header" property="header"/>
+        <result column="e_alias" property="alias"/>
+        <result column="e_cover" property="cover"/>
+    </resultMap>
+    <resultMap id="discussUserBaseInfoMap" type="UserBaseInfo">
+        <id column="a_mw_id" property="mwId"/>
+        <result column="a_sex" property="sex"/>
+        <result column="a_birthday" property="birthday"/>
+        <result column="a_wechat" property="wechat"/>
+        <result column="a_introduction" property="introduction"/>
+        <result column="a_header" property="header"/>
+        <result column="a_alias" property="alias"/>
+        <result column="a_cover" property="cover"/>
+    </resultMap>
+    <resultMap id="replyDiscussUserBaseInfoMap" type="UserBaseInfo">
+        <id column="b_mw_id" property="mwId"/>
+        <result column="b_sex" property="sex"/>
+        <result column="b_birthday" property="birthday"/>
+        <result column="b_wechat" property="wechat"/>
+        <result column="b_introduction" property="introduction"/>
+        <result column="b_header" property="header"/>
+        <result column="b_alias" property="alias"/>
+        <result column="b_cover" property="cover"/>
+
+    </resultMap>
+    <resultMap id="replyDiscussTargetUserBaseInfoMap" type="UserBaseInfo">
+        <id column="c_mw_id" property="mwId"/>
+        <result column="c_sex" property="sex"/>
+        <result column="c_birthday" property="birthday"/>
+        <result column="c_wechat" property="wechat"/>
+        <result column="c_introduction" property="introduction"/>
+        <result column="c_header" property="header"/>
+        <result column="c_alias" property="alias"/>
+        <result column="c_cover" property="cover"/>
+    </resultMap>
+    <resultMap id="discussMap" type="discuss">
+        <id column="discuss_id" property="discussId"/>
+        <result column="discuss_time" property="discussTime"/>
+        <result column="article_id" property="articleId"/>
+        <result column="content" property="content"/>
+        <result column="praise_number" property="praiseNumber"/>
+        <association property="userBaseInfo" resultMap="discussUserBaseInfoMap"/>
+        <collection property="replyDiscussList" resultMap="replyDiscussMap"/>
+    </resultMap>
+    <resultMap id="replyDiscussMap" type="ReplyDiscuss">
+        <id column="r_discuss_id" property="replyDiscussId"/>
+        <result column="r_discuss_time" property="discussTime"/>
+        <result column="r_content" property="content"/>
+        <result column="discuss_id" property="discussId"/>
+        <result column="r_praise_number" property="replyPraiseNumber"/>
+        <result column="to_content" property="toContent"/>
+        <association property="userBaseInfo" resultMap="replyDiscussUserBaseInfoMap"/>
+        <association property="targetUserBaseInfo" resultMap="replyDiscussTargetUserBaseInfoMap"/>
+    </resultMap>
+</mapper>
